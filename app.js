@@ -1,3 +1,4 @@
+const Joi = require('joi');
 const express = require('express');
 
 const app = express();
@@ -27,6 +28,8 @@ app.get('/api/books/:id', (req, res) => {
 
 app.post('/api/books', (req, res) => {
 
+    const { error } = validateBook(req.body);
+    if (error) return res.status(400).send(error.details[0].message);
 
     const book = {
         id: books.length + 1,
@@ -41,8 +44,10 @@ app.post('/api/books', (req, res) => {
 
 app.put('/api/books/:id', (req, res) => {
     const book = books.find(book => book.id === parseInt(req.params.id));
-
     if (!book) return res.status(404).send('Book id not found');
+
+    const { error } = validateBook(req.body);
+    if (error) return res.status(400).send(error.details[0].message);
 
     book.name = req.body.name;
     book.description = req.body.description;
@@ -66,3 +71,12 @@ app.listen(port, () => {
     console.log(`Server running at port ${port}`);
 });
 
+
+function validateBook(book) {
+    const schema = Joi.object({
+        name: Joi.string().min(3).required(),
+        description: Joi.string().min(3)
+    });
+
+    return schema.validate(book);
+}
